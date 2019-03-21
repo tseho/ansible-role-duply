@@ -1,0 +1,35 @@
+# {{ ansible_managed }}
+# See duply (http://duply.net/tmp/duply.sh) create_config() documentation
+
+GPG_KEY='disabled'
+GPG_PW=''
+
+TARGET='{{ item.target }}'
+{% if item.target_user is defined %}
+TARGET_USER='{{ item.target_user }}'
+{% endif %}
+{% if item.target_pass is defined %}
+TARGET_PASS='{{ item.target_pass }}'
+{% endif %}
+
+{% if '://' in item.source %}
+SOURCE='{{ duply_work_dir }}/{{ item.name }}/dump.sql'
+{% else %}
+SOURCE='{{ item.source }}'
+{% endif %}
+
+MAX_AGE='{{ item.max_age|default(duply_max_age) }}'
+MAX_FULL_BACKUPS='{{ item.keep_full_backups|default(duply_keep_full_backups) }}'
+
+# activates duplicity --full-if-older-than option (since duplicity v0.4.4.RC3)
+# forces a full backup if last full backup reaches a specified age, for the
+DUPL_PARAMS="$DUPL_PARAMS --full-if-older-than {{ item.full_max_age|default(duply_full_max_age) }} "
+
+VERBOSITY={{ item.verbosity|default(duply_verbosity) }}
+TEMP_DIR={{ duply_temp_dir }}
+
+{% if item.params is defined %}
+{% for param in item.params %}
+{{ param }}
+{% endfor %}
+{% endif %}

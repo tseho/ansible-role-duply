@@ -1,0 +1,7 @@
+# {{ ansible_managed }}
+
+{% if item.exclude is defined %}
+{% for exclude in item.exclude %}
+- {{ exclude }}
+{% endfor %}
+{% endif %}

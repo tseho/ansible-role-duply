@@ -1,0 +1,3 @@
+---
+- include: configure.yml
+  when: duply_enabled

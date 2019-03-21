@@ -1,0 +1,100 @@
+---
+- name: duply | Install duplicity and dependencies
+  apt:
+    name:
+      - cron
+      - gzip
+      - python-boto
+      - duplicity
+
+- name: duply | Ensure backup user exists
+  user:
+    name: "{{ duply_user }}"
+
+- name: duply | Ensure backup directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ duply_user }}"
+    group: "{{ duply_group }}"
+  with_items:
+    - "{{ duply_home_dir }}"
+    - "{{ duply_work_dir }}"
+    - "{{ duply_temp_dir }}"
+    - "{{ duply_log_dir }}"
+
+- name: duply | Install duply
+  copy:
+    src: duply.sh
+    dest: /usr/bin/duply
+    owner: "{{ duply_user }}"
+    group: "{{ duply_group }}"
+    mode: 0755
+
+- name: duply | Ensure work directories exist
+  file:
+    path: "{{ duply_work_dir }}/{{ item.name }}"
+    state: directory
+    owner: "{{ item.user|default(duply_user) }}"
+    group: "{{ item.group|default(duply_group) }}"
+    mode: 0700
+  with_items: "{{ duply_profiles }}"
+
+- name: duply | Ensure profiles directories exist
+  file:
+    path: "{{ duply_home_dir }}/{{ item.name }}"
+    state: directory
+    owner: "{{ item.user|default(duply_user) }}"
+    group: "{{ item.group|default(duply_group) }}"
+    mode: 0700
+  with_items: "{{ duply_profiles }}"
+
+- name: duply | Configure profiles
+  template:
+    src: conf.j2
+    dest: "{{ duply_home_dir }}/{{ item.name }}/conf"
+    owner: "{{ item.user|default(duply_user) }}"
+    group: "{{ item.group|default(duply_group) }}"
+  with_items: "{{ duply_profiles }}"
+
+- name: duply | Configure exclude lists
+  template:
+    src: exclude.j2
+    dest: "{{ duply_home_dir }}/{{ item.name }}/exclude"
+    owner: "{{ item.user|default(duply_user) }}"
+    group: "{{ item.group|default(duply_group) }}"
+  with_items: "{{ duply_profiles }}"
+
+- name: duply | Configure pre scripts
+  template:
+    src: pre.j2
+    dest: "{{ duply_home_dir }}/{{ item.name }}/pre"
+    owner: "{{ item.user|default(duply_user) }}"
+    group: "{{ item.group|default(duply_group) }}"
+  with_items: "{{ duply_profiles }}"
+
+- name: duply | Configure post scripts
+  template:
+    src: post.j2
+    dest: "{{ duply_home_dir }}/{{ item.name }}/post"
+    owner: "{{ item.user|default(duply_user) }}"
+    group: "{{ item.group|default(duply_group) }}"
+  with_items: "{{ duply_profiles }}"
+
+- name: duply | Setup cron
+  template:
+    src: cron.j2
+    dest: /etc/cron.d/backup
+    owner: root
+    group: root
+    mode: 0644
+  when: duply_cron
+
+- name: duply | Ensure log files exist
+  file:
+    path: "{{ duply_log_dir }}/{{ item.name }}.log"
+    state: touch
+    owner: "{{ item.user|default(duply_user) }}"
+    group: "{{ item.group|default(duply_group) }}"
+  with_items: "{{ duply_profiles }}"
+  changed_when: False

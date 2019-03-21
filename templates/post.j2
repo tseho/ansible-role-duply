@@ -1,0 +1,6 @@
+#!/bin/bash
+# {{ ansible_managed }}
+
+{% if item.source.startswith('mysql://') %}
+rm {{ duply_work_dir }}/{{ item.name }}/dump.sql
+{% endif %}
