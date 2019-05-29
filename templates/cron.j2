@@ -1,7 +1,5 @@
 # {{ ansible_managed }}
 
-{% for profile in duply_profiles %}
-{% for cronjob in profile.cronjobs %}
-{{ cronjob.schedule }} {{ profile.user|default(duply_user) }} /usr/bin/duply {{ duply_home_dir }}/{{ profile.name }} {{ cronjob.action|default('backup') }} >> {{ duply_log_dir }}/{{ profile.name }}.log 2>&1
-{% endfor %}
+{% for cronjob in item.cronjobs %}
+{{ cronjob.schedule }} {{ item.user|default(duply_user) }} /usr/bin/duply {{ duply_home_dir }}/{{ item.name }} {{ cronjob.action|default('backup') }} >> {{ duply_log_dir }}/{{ item.name }}.log 2>&1
 {% endfor %}

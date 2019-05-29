@@ -84,10 +84,11 @@
 - name: duply | Setup cron
   template:
     src: cron.j2
-    dest: /etc/cron.d/backup
+    dest: "/etc/cron.d/backup_{{ item.name }}"
     owner: root
     group: root
     mode: 0644
+  with_items: "{{ duply_profiles }}"
   when: duply_cron
 
 - name: duply | Ensure log files exist
